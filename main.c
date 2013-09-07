@@ -3,7 +3,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#define STRING
 #define BUF_SIZE 28
 
 #ifdef LINKED_LIST
@@ -29,8 +28,10 @@ char *zSoundex(const char *, enum Language);
 int init_Tab_Soundex(const char *path) {
     char buf[BUF_SIZE];
     FILE *f = fopen(path, "r");
-    if(f == NULL)
+    if(f == NULL) {
+        printf("!!FILE is NULL!!\n");
         return 0;
+    }
     while(fgets(buf, BUF_SIZE, f) != NULL) {
         int n = buf[0] - '0';
         for(int i = 1; buf[i] != '\n' && buf[i] != '\0'; ++i)
@@ -47,17 +48,18 @@ int getNum(int letter) {
 
 bool isConsonant(int c) { if(c <= 'Z' && c > 'A' && c != 'E' && c != 'I' && c != 'O' && c != 'U' && c != 'Y') return true; return false; }
 
-char *zSoundexWord(const char *word, unsigned size, char *ret) { //ret must be a 5-cell tab
+char *zSoundexWord(const char *word, unsigned size, char *ret) { //ret must be a pre allocated 5-cell tab
     int index = 1;
     if(word == NULL || ret == NULL) return NULL;
     for(unsigned i = 0; word[i] != '\0' && i < size; ++i)
-        if((tolower(word[i]) < 'a' || tolower(word[i]) > 'z') && isalpha(word[i]) != 0)
+        if((tolower(word[i]) < 'a' || tolower(word[i]) > 'z') && isalpha(word[i]) == 0)
             return NULL;
     ret[0] = toupper(word[0]);
 
     for(unsigned i = 1; word[i] != '\0' && i < size && index < 4; ++i) {
         if(isConsonant(toupper(word[i]))
         && toupper(word[i]) != 'H' && toupper(word[i]) != 'W'
+        && toupper(word[i-1]) != 'H' && toupper(word[i-1]) != 'W'
         && (getNum(word[i]) != getNum(word[i-1])))
             ret[index++] = getNum(word[i]) + '0';
     }
@@ -78,7 +80,7 @@ List *zSoundex(const char *str, enum Language lgg) {
     char *add;
 
     for(size_t i = 0; i <= length; ++i) {
-        if(isalpha(str[i]) != 0 || i == length) {
+        if(isalpha(str[i]) == 0 || i == length) {
             if(inword == true) {
                 add = malloc(5);
                 List_add(zSoundexWord(&str[index], i-index, add), ret);
@@ -100,10 +102,10 @@ char *zSoundex(const char *str, enum Language lgg) {
     size_t length = strlen(str),
             nWords = 0,
             index = 0;
-    bool inword = false;
+    bool inword = true;
 
     for(size_t i = 0; i <= length; ++i) {
-        if(isalpha(str[i]) != 0 || i == length) {
+        if(isalpha(str[i]) == 0 || i == length) {
             if(inword == true) {
                 inword = false;
                 ++nWords;
@@ -111,11 +113,12 @@ char *zSoundex(const char *str, enum Language lgg) {
         } else
             inword = true;
     }
+    inword = true;
     ret = malloc(nWords*5);
-    ret[0] = '\0';
     if(ret != NULL) {
+        ret[0] = '\0';
         for(size_t i = 0; i <= length; ++i) {
-            if(isalpha(str[i]) != 0 || i == length) {
+            if(isalpha(str[i]) == 0 || i == length) {
                 if(inword == true) {
                     zSoundexWord(&str[index], i-index, tmp);
                     strcat(ret, tmp);
