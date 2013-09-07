@@ -12,8 +12,10 @@
 #endif
 
 enum Language {FR, EN};
-const char *path[] = {"Fr.txt", "En.txt"};
-char toN[26] = {};
+char toNEn[26] = {0, 1, 2, 3, 0, 1, 2, 0, 0, 2, 2, 4, 5, 5, 0, 1, 2, 6, 2, 3, 0, 1, 0, 2, 0, 2};
+char toNFr[26] = {0, 1, 2, 3, 0, 9, 7, 0, 0, 7, 2, 4, 5, 5, 0, 1, 2, 6, 8, 3, 0, 9, 0, 8, 0, 8};
+
+char *toN;
 
 int getNum(int);
 bool isConsonant(int);
@@ -24,22 +26,6 @@ List *zSoundex(const char *, enum Language);
 #elif defined (STRING)
 char *zSoundex(const char *, enum Language);
 #endif
-
-int init_Tab_Soundex(const char *path) {
-    char buf[BUF_SIZE];
-    FILE *f = fopen(path, "r");
-    if(f == NULL) {
-        printf("!!FILE is NULL!!\n");
-        return 0;
-    }
-    while(fgets(buf, BUF_SIZE, f) != NULL) {
-        int n = buf[0] - '0';
-        for(int i = 1; buf[i] != '\n' && buf[i] != '\0'; ++i)
-            toN[buf[i] - 'A'] = n;
-    }
-    fclose(f);
-    return 1;
-}
 
 int getNum(int letter) {
     letter = toupper(letter);
@@ -72,7 +58,9 @@ char *zSoundexWord(const char *word, unsigned size, char *ret) { //ret must be a
 
 #ifdef LINKED_LIST
 List *zSoundex(const char *str, enum Language lgg) {
-    if(init_Tab_Soundex(path[lgg]) == 0) return NULL;
+    if(lgg == EN) toN = toNEn;
+    else if(lgg == FR) toN = toNFr;
+    else return NULL;
     List *ret = List_init();
     size_t  index = 0,
             length = strlen(str);
@@ -96,7 +84,9 @@ List *zSoundex(const char *str, enum Language lgg) {
 }
 #elif defined (STRING)
 char *zSoundex(const char *str, enum Language lgg) {
-    if(init_Tab_Soundex(path[lgg]) == 0) return NULL;
+    if(lgg == EN) toN = toNEn;
+    else if(lgg == FR) toN = toNFr;
+    else return NULL;
     char *ret,
          tmp[5];
     size_t length = strlen(str),
