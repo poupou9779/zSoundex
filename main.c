@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#incldue <ctype.h>
+#include <ctype.h>
 
 #define BUF_SIZE 28
 
@@ -18,8 +18,6 @@ char toN[26] = {};
 
 int getNum(int);
 bool isConsonant(int);
-int toUpper(int);
-int toLower(int);
 char *zSoundexWord(const char *, unsigned, char *);
 
 #ifdef LINKED_LIST
@@ -43,7 +41,7 @@ int init_Tab_Soundex(const char *path) {
 }
 
 int getNum(int letter) {
-    letter = toUpper(letter);
+    letter = toupper(letter);
     return toN[letter - 'A'];
 }
 
@@ -53,13 +51,13 @@ char *zSoundexWord(const char *word, unsigned size, char *ret) { //ret must be a
     int index = 1;
     if(word == NULL || ret == NULL) return NULL;
     for(unsigned i = 0; word[i] != '\0' && i < size; ++i)
-        if((toLower(word[i]) < 'a' || toLower(word[i]) > 'z') && strchr(separators, word[i]) == NULL)
+        if((tolower(word[i]) < 'a' || tolower(word[i]) > 'z') && strchr(separators, word[i]) == NULL)
             return NULL;
-    ret[0] = toUpper(word[0]);
+    ret[0] = toupper(word[0]);
 
     for(unsigned i = 1; word[i] != '\0' && i < size && index < 4; ++i) {
-        if(isConsonant(toUpper(word[i]))
-        && toUpper(word[i]) != 'H' && toUpper(word[i]) != 'W'
+        if(isConsonant(toupper(word[i]))
+        && toupper(word[i]) != 'H' && toupper(word[i]) != 'W'
         && (getNum(word[i]) != getNum(word[i-1])))
             ret[index++] = getNum(word[i]) + '0';
     }
