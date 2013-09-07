@@ -1,4 +1,4 @@
-//#ifdef LINKED_LIST
+#ifdef LINKED_LIST
 #include "List.h"
 #include <stdlib.h>
 #include <string.h>
@@ -57,4 +57,4 @@ bool List_equal(List *l1, List *l2) {
     }
     return true;
 }
-//#endif
+#endif
