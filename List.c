@@ -1,4 +1,3 @@
-#ifdef LINKED_LIST
 #include "List.h"
 #include <stdlib.h>
 #include <string.h>
@@ -21,8 +20,6 @@ List *List_add(char *ptr, List *l) {
     else {
         l->End->next = el;
         l->End = el;
-        if(l->n == 1)
-            l->Beg->next = l->End;
     }
     ++l->n;
     return l;
@@ -57,4 +54,3 @@ bool List_equal(List *l1, List *l2) {
     }
     return true;
 }
-#endif
