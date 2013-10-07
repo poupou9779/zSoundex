@@ -1,51 +1,51 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-
-#define BUF_SIZE 28
-
-#ifdef LINKED_LIST
 #include "List.h"
-#else
-#include <stdbool.h>
-#endif
 
-enum Language {FR, EN};
-char toNEn[26] = {0, 1, 2, 3, 0, 1, 2, 0, 0, 2, 2, 4, 5, 5, 0, 1, 2, 6, 2, 3, 0, 1, 0, 2, 0, 2};
-char toNFr[26] = {0, 1, 2, 3, 0, 9, 7, 0, 0, 7, 2, 4, 5, 5, 0, 1, 2, 6, 8, 3, 0, 9, 0, 8, 0, 8};
-
-char *toN;
+#define FR
 
 int getNum(int);
 bool isConsonant(int);
+int toUpper(int);
+int toLower(int);
 char *zSoundexWord(const char *, unsigned, char *);
+List *zSoundex(const char *);
 
-#ifdef LINKED_LIST
-List *zSoundex(const char *, enum Language);
-#elif defined (STRING)
-char *zSoundex(const char *, enum Language);
+const char *separators = " ,?;.:!()'[]";
+
+int NumFr[26] = {0, 1, 2, 3, 0, 9, 7, 0, 0, 7, 2, 4, 5, 5, 0, 1, 2, 6, 8, 3, 0, 9, 0, 8, 0, 8};
+int NumEn[26] = {0, 1, 2, 3, 0, 1, 2, 0, 0, 2, 2, 4, 5, 5, 0, 1, 2, 6, 2, 3, 0, 1, 0, 2, 0, 2};
+#if defined (FR)
+    int *ptr = NumFr;
+#elif defined (EN)
+    int *ptr = NumEn;
 #endif
 
 int getNum(int letter) {
-    letter = toupper(letter);
-    return toN[letter - 'A'];
+    letter = toUpper(letter);
+    return ptr[letter - 'A'];
 }
 
-bool isConsonant(int c) { if(c <= 'Z' && c > 'A' && c != 'E' && c != 'I' && c != 'O' && c != 'U' && c != 'Y') return true; return false; }
+int toLower(int c) { return c >= 'A' && c <= 'Z' ? c - 'A' + 'a' : c; }
+int toUpper(int c) { return c >= 'a' && c <= 'z' ? c - 'a' + 'A' : c; }
 
-char *zSoundexWord(const char *word, unsigned size, char *ret) { //ret must be a pre allocated 5-cell tab
+bool isConsonant(int c) {
+    if(c <= 'Z' && c > 'A' && c != 'E' && c != 'I' && c != 'O' && c != 'U' && c != 'Y') return true;
+    return false;
+}
+
+char *zSoundexWord(const char *word, unsigned size, char *ret) { //ret must be a 5-cell tab
     int index = 1;
     if(word == NULL || ret == NULL) return NULL;
     for(unsigned i = 0; word[i] != '\0' && i < size; ++i)
-        if((tolower(word[i]) < 'a' || tolower(word[i]) > 'z') && isalpha(word[i]) == 0)
+        if((toLower(word[i]) < 'a' || toLower(word[i]) > 'z') && strchr(separators, word[i]) == NULL)
             return NULL;
-    ret[0] = toupper(word[0]);
+    ret[0] = toUpper(word[0]);
 
     for(unsigned i = 1; word[i] != '\0' && i < size && index < 4; ++i) {
-        if(isConsonant(toupper(word[i]))
-        && toupper(word[i]) != 'H' && toupper(word[i]) != 'W'
-        && toupper(word[i-1]) != 'H' && toupper(word[i-1]) != 'W'
+        if(isConsonant(toUpper(word[i]))
+        && toUpper(word[i]) != 'H' && toUpper(word[i]) != 'W'
         && (getNum(word[i]) != getNum(word[i-1])))
             ret[index++] = getNum(word[i]) + '0';
     }
@@ -56,11 +56,7 @@ char *zSoundexWord(const char *word, unsigned size, char *ret) { //ret must be a
     return ret;
 }
 
-#ifdef LINKED_LIST
-List *zSoundex(const char *str, enum Language lgg) {
-    if(lgg == EN) toN = toNEn;
-    else if(lgg == FR) toN = toNFr;
-    else return NULL;
+List *zSoundex(const char *str) {
     List *ret = List_init();
     size_t  index = 0,
             length = strlen(str);
@@ -68,7 +64,7 @@ List *zSoundex(const char *str, enum Language lgg) {
     char *add;
 
     for(size_t i = 0; i <= length; ++i) {
-        if(isalpha(str[i]) == 0 || i == length) {
+        if(strchr(separators, str[i]) != NULL || i == length) {
             if(inword == true) {
                 add = malloc(5);
                 List_add(zSoundexWord(&str[index], i-index, add), ret);
@@ -82,68 +78,16 @@ List *zSoundex(const char *str, enum Language lgg) {
     }
     return ret;
 }
-#elif defined (STRING)
-char *zSoundex(const char *str, enum Language lgg) {
-    if(lgg == EN) toN = toNEn;
-    else if(lgg == FR) toN = toNFr;
-    else return NULL;
-    char *ret,
-         tmp[5];
-    size_t length = strlen(str),
-            nWords = 0,
-            index = 0;
-    bool inword = true;
 
-    for(size_t i = 0; i <= length; ++i) {
-        if(isalpha(str[i]) == 0 || i == length) {
-            if(inword == true) {
-                inword = false;
-                ++nWords;
-            }
-        } else
-            inword = true;
-    }
-    inword = true;
-    ret = malloc(nWords*5);
-    if(ret != NULL) {
-        ret[0] = '\0';
-        for(size_t i = 0; i <= length; ++i) {
-            if(isalpha(str[i]) == 0 || i == length) {
-                if(inword == true) {
-                    zSoundexWord(&str[index], i-index, tmp);
-                    strcat(ret, tmp);
-                    strcat(ret, " ");
-                    index = i;
-                    inword = false;
-                }
-                ++index;
-            } else
-                inword = true;
-        }
-        ret[5*nWords - 1] = '\0';
-    }
-    return ret;
-}
-#endif
-
-bool isEqualSoundex(const char *str1, const char *str2, enum Language lgg) {
-#ifdef LINKED_LIST
-    List *l1 = zSoundex(str1, lgg),
-         *l2 = zSoundex(str2, lgg);
+bool isEqualSoundex(const char *str1, const char *str2) {
+    List *l1 = zSoundex(str1),
+         *l2 = zSoundex(str2);
     bool ret = List_equal(l1, l2);
     List_free(l1);
     List_free(l2);
     return ret;
-#elif defined (STRING)
-    char *s1 = zSoundex(str1, lgg),
-         *s2 = zSoundex(str2, lgg);
-    bool ret = !strcmp(s1, s2);
-    free(s1); s1 = NULL;
-    free(s2); s2 = NULL;
-#endif
-    return ret;
 }
 
 int main(void) {
-    return isEqualSoundex("Je suis un chat.", "Ji souys une cat...", FR);
+    return isEqualSoundex("je suis un chat", "Ji souis une catte");
 }
